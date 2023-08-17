@@ -25,13 +25,15 @@ func (g *Game) ReadProblemsFromCSVFile(filePath string) {
 		log.Fatalf(fmt.Sprintf("Failed to parse the provided CSV file: %s\n", err))
 	}
 
-	for _, line := range data {
+	g.Problems = make([]Problem, len(data))
+
+	for i, line := range data {
 		intAnswer, _ := strconv.Atoi(line[1])
 
-		g.Problems = append(g.Problems, Problem{
+		g.Problems[i] = Problem{
 			Question: line[0],
 			Answer:   intAnswer,
-		})
+		}
 	}
 }
 
