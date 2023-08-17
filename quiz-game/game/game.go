@@ -1,62 +1,72 @@
 package game
 
 import (
-	"encoding/csv"
+	"context"
 	"fmt"
 	"log"
-	"os"
+	"math/rand"
 	"strconv"
+	"time"
 )
 
-type problem struct {
+type Problem struct {
 	Question string
 	Answer   int
 }
 
-func readProblems(file *os.File) []problem {
-	csvReader := csv.NewReader(file)
-	data, err := csvReader.ReadAll()
+type Game struct {
+	Problems []Problem
+	Limit    int
+}
 
+func (g *Game) ReadProblemsFromCSVFile(filePath string) {
+	data, err := ReadCSVFile(filePath)
 	if err != nil {
 		log.Fatalf(fmt.Sprintf("Failed to parse the provided CSV file: %s\n", err))
 	}
 
-	var problems []problem
-
 	for _, line := range data {
-
 		intAnswer, _ := strconv.Atoi(line[1])
-		problems = append(problems, problem{
+
+		g.Problems = append(g.Problems, Problem{
 			Question: line[0],
 			Answer:   intAnswer,
 		})
 	}
-
-	return problems
 }
 
-func RunGame(fileName string, limit int) {
-	file, err := os.Open(fileName)
-	if err != nil {
-		log.Fatalf(fmt.Sprintf("Failed to open the CSV file: %s\n", err))
-	}
+func (g *Game) ShuffleProblems() {
+	rand.Shuffle(len(g.Problems), func(i, j int) {
+		g.Problems[i], g.Problems[j] = g.Problems[j], g.Problems[i]
+	})
+}
+func (g *Game) Run() {
 
-	defer file.Close()
+	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Duration(g.Limit)*time.Second)
+	defer cancelFunc()
 
-	problems := readProblems(file)
+	correctAnswers, _ := g.askQuestions(ctx)
 
+	fmt.Printf("You scored %d out of %d.\n", correctAnswers, len(g.Problems))
+}
+
+func (g *Game) askQuestions(ctx context.Context) (int, error) {
 	var userAnswer int
 	var correctAnswers int
+	for index, problem := range g.Problems {
+		select {
+		case <-ctx.Done():
+			return correctAnswers, ctx.Err()
+		default:
+			fmt.Printf("Problem #%d: %s = ", index+1, problem.Question)
+			fmt.Scan(&userAnswer)
 
-	for index, problem := range problems {
-		fmt.Printf("Problem #%d: %s = ", index+1, problem.Question)
-		fmt.Scan(&userAnswer)
-
-		if userAnswer == problem.Answer {
-			correctAnswers += 1
+			if userAnswer == problem.Answer {
+				correctAnswers += 1
+			}
 		}
+
 	}
 
-	fmt.Printf("You scored %d out of %d.\n", correctAnswers, len(problems))
-
+	return correctAnswers, nil
 }
