@@ -1,7 +1,6 @@
 package game
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"math/rand"
@@ -43,25 +42,30 @@ func (g *Game) ShuffleProblems() {
 }
 func (g *Game) Run() {
 
-	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Duration(g.Limit)*time.Second)
-	defer cancelFunc()
+	correctAnswers := g.askQuestions()
 
-	correctAnswers, _ := g.askQuestions(ctx)
-
-	fmt.Printf("You scored %d out of %d.\n", correctAnswers, len(g.Problems))
+	fmt.Printf("\nYou scored %d out of %d.\n", correctAnswers, len(g.Problems))
 }
 
-func (g *Game) askQuestions(ctx context.Context) (int, error) {
-	var userAnswer string
-	var correctAnswers int
-	for index, problem := range g.Problems {
-		select {
-		case <-ctx.Done():
-			return correctAnswers, ctx.Err()
-		default:
-			fmt.Printf("Problem #%d: %s = ", index+1, problem.Question)
-			fmt.Scan(&userAnswer)
+func (g *Game) askQuestions() int {
 
+	timer := time.NewTimer(time.Duration(g.Limit) * time.Second)
+
+	correctAnswers := 0
+	for index, problem := range g.Problems {
+		fmt.Printf("Problem #%d: %s = ", index+1, problem.Question)
+
+		answerChannel := make(chan string)
+		go func() {
+			var userAnswer string
+			fmt.Scan(&userAnswer)
+			answerChannel <- userAnswer
+		}()
+
+		select {
+		case <-timer.C:
+			return correctAnswers
+		case userAnswer := <-answerChannel:
 			if userAnswer == problem.Answer {
 				correctAnswers++
 			}
@@ -69,5 +73,5 @@ func (g *Game) askQuestions(ctx context.Context) (int, error) {
 
 	}
 
-	return correctAnswers, nil
+	return correctAnswers
 }
