@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"strconv"
+	"strings"
 	"time"
 )
 
 type Problem struct {
 	Question string
-	Answer   int
+	Answer   string
 }
 
 type Game struct {
@@ -28,11 +28,10 @@ func (g *Game) ReadProblemsFromCSVFile(filePath string) {
 	g.Problems = make([]Problem, len(data))
 
 	for i, line := range data {
-		intAnswer, _ := strconv.Atoi(line[1])
 
 		g.Problems[i] = Problem{
 			Question: line[0],
-			Answer:   intAnswer,
+			Answer:   strings.TrimSpace(line[1]),
 		}
 	}
 }
@@ -53,7 +52,7 @@ func (g *Game) Run() {
 }
 
 func (g *Game) askQuestions(ctx context.Context) (int, error) {
-	var userAnswer int
+	var userAnswer string
 	var correctAnswers int
 	for index, problem := range g.Problems {
 		select {
@@ -64,7 +63,7 @@ func (g *Game) askQuestions(ctx context.Context) (int, error) {
 			fmt.Scan(&userAnswer)
 
 			if userAnswer == problem.Answer {
-				correctAnswers += 1
+				correctAnswers++
 			}
 		}
 
