@@ -11,6 +11,8 @@ import (
 
 func main() {
 	ymlFileFlag := flag.String("yml", "urls.yml", "YAML file containing the URL mappings")
+	jsonFileFlag := flag.String("json", "urls.json", "JSON file containing the URL mappings")
+
 	flag.Parse()
 	mux := defaultMux()
 	pathsToUrls := map[string]string{
@@ -25,7 +27,7 @@ func main() {
 		panic(err)
 	}
 
-	json := readFileData("urls.json")
+	json := readFileData(*jsonFileFlag)
 
 	jsonHandler, err := handler.JSONHandler([]byte(json), yamlHandler)
 	if err != nil {
