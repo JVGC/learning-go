@@ -2,6 +2,8 @@ package handler
 
 import (
 	"net/http"
+
+	"gopkg.in/yaml.v2"
 )
 
 // MapHandler will return an http.HandlerFunc (which also
@@ -10,7 +12,7 @@ import (
 // that each key in the map points to, in string format).
 // If the path is not provided in the map, then the fallback
 // http.Handler will be called instead.
-func MapHandler(pathsToUrls map[string]string, fallback *http.ServeMux) http.HandlerFunc {
+func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
 	//	TODO: Implement this...
 	return func(w http.ResponseWriter, r *http.Request) {
 		if val, doesExist := pathsToUrls[r.URL.Path]; doesExist {
@@ -39,6 +41,36 @@ func MapHandler(pathsToUrls map[string]string, fallback *http.ServeMux) http.Han
 // See MapHandler to create a similar http.HandlerFunc via
 // a mapping of paths to urls.
 func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
-	// TODO: Implement this...
-	return nil, nil
+	parsedYaml, err := parseYAML(yml)
+	if err != nil {
+		return nil, err
+	}
+	pathMap := buildMap(parsedYaml)
+	return MapHandler(pathMap, fallback), nil
+}
+
+func parseYAML(yml []byte) ([]urlRedirect, error) {
+	pathsToUrls := make([]urlRedirect, 0)
+
+	err := yaml.Unmarshal(yml, &pathsToUrls)
+	if err != nil {
+		return nil, err
+	}
+
+	return pathsToUrls, nil
+}
+
+func buildMap(parsedYaml []urlRedirect) map[string]string {
+	pathMap := make(map[string]string)
+
+	for _, urlRedirect := range parsedYaml {
+		pathMap[urlRedirect.Path] = urlRedirect.URL
+	}
+
+	return pathMap
+}
+
+type urlRedirect struct {
+	Path string `yaml:"path"`
+	URL  string `yaml:"url"`
 }
