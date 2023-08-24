@@ -10,9 +10,16 @@ import (
 // that each key in the map points to, in string format).
 // If the path is not provided in the map, then the fallback
 // http.Handler will be called instead.
-func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
+func MapHandler(pathsToUrls map[string]string, fallback *http.ServeMux) http.HandlerFunc {
 	//	TODO: Implement this...
-	return nil
+	return func(w http.ResponseWriter, r *http.Request) {
+		if val, doesExist := pathsToUrls[r.URL.Path]; doesExist {
+			w.Header().Set("Content-Type", "application/json")
+			http.Redirect(w, r, val, http.StatusMovedPermanently)
+		} else {
+			fallback.ServeHTTP(w, r)
+		}
+	}
 }
 
 // YAMLHandler will parse the provided YAML and then return
