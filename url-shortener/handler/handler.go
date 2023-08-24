@@ -13,7 +13,6 @@ import (
 // If the path is not provided in the map, then the fallback
 // http.Handler will be called instead.
 func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
-	//	TODO: Implement this...
 	return func(w http.ResponseWriter, r *http.Request) {
 		if val, doesExist := pathsToUrls[r.URL.Path]; doesExist {
 			w.Header().Set("Content-Type", "application/json")
@@ -34,12 +33,6 @@ func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.Handl
 //
 //   - path: /some-path
 //     url: https://www.some-url.com/demo
-//
-// The only errors that can be returned all related to having
-// invalid YAML data.
-//
-// See MapHandler to create a similar http.HandlerFunc via
-// a mapping of paths to urls.
 func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	parsedYaml, err := parseYAML(yml)
 	if err != nil {
