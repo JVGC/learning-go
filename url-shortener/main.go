@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,6 +10,8 @@ import (
 )
 
 func main() {
+	ymlFileFlag := flag.String("yml", "urls.yml", "YAML file containing the URL mappings")
+	flag.Parse()
 	mux := defaultMux()
 	pathsToUrls := map[string]string{
 		"/urlshort-godoc": "https://godoc.org/github.com/gophercises/urlshort",
@@ -16,7 +19,7 @@ func main() {
 	}
 	mapHandler := handler.MapHandler(pathsToUrls, mux)
 
-	yaml := readYAMLData("urls.yml")
+	yaml := readYAMLData(*ymlFileFlag)
 	yamlHandler, err := handler.YAMLHandler([]byte(yaml), mapHandler)
 	if err != nil {
 		panic(err)
