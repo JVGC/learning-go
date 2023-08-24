@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"url-shortener/handler"
 )
 
@@ -13,12 +15,8 @@ func main() {
 		"/yaml-godoc":     "https://godoc.org/gopkg.in/yaml.v2",
 	}
 	mapHandler := handler.MapHandler(pathsToUrls, mux)
-	yaml := `
-- path: /urlshort
-  url: https://github.com/gophercises/urlshort
-- path: /urlshort-final
-  url: https://github.com/gophercises/urlshort/tree/solution
-`
+
+	yaml := readYAMLData("urls.yml")
 	yamlHandler, err := handler.YAMLHandler([]byte(yaml), mapHandler)
 	if err != nil {
 		panic(err)
@@ -35,4 +33,13 @@ func defaultMux() *http.ServeMux {
 
 func hello(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello, world!")
+}
+
+func readYAMLData(ymlFileName string) []byte {
+	yamlData, err := os.ReadFile(ymlFileName)
+	if err != nil {
+		log.Fatalf(fmt.Sprintf("Failed to open the YAML file: %s\n", err))
+	}
+
+	return yamlData
 }
